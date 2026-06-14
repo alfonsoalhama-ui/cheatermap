@@ -55,6 +55,41 @@ function pickGender(): string {
   return 'gf';
 }
 
+const PROFESSIONS = [
+  { name: 'Sales Representative',    w: 12 },
+  { name: 'Doctor/Nurse',            w: 10 },
+  { name: 'Tradesperson',            w:  9 },
+  { name: 'Teacher/Educator',        w:  8 },
+  { name: 'Hospitality Worker',      w:  7 },
+  { name: 'Executive/CEO',           w:  6 },
+  { name: 'Police/Military',         w:  5 },
+  { name: 'Lawyer',                  w:  4 },
+  { name: 'Pilot/Flight Attendant',  w:  4 },
+  { name: 'Finance/Banker',          w:  4 },
+  { name: 'IT/Developer',            w:  3 },
+  { name: 'Journalist/Media',        w:  3 },
+  { name: 'ER Doctor/Surgeon',       w:  3 },
+  { name: 'Shop Owner/Retailer',     w:  3 },
+  { name: 'Driver/Transport Worker', w:  3 },
+  { name: 'Athlete/Personal Trainer',w:  2 },
+  { name: 'Actor/Musician/DJ',       w:  2 },
+  { name: 'Real Estate Agent',       w:  2 },
+  { name: 'HR Professional',         w:  2 },
+  { name: 'Architect/Engineer',      w:  2 },
+  { name: 'Pharmacist',              w:  1 },
+  { name: 'Psychologist/Therapist',  w:  1 },
+  { name: 'Chef/Cook',               w:  1 },
+  { name: 'Hairdresser/Beautician',  w:  1 },
+  { name: 'Freelancer/Self-employed',w:  1 },
+];
+
+function pickProfession(): string {
+  const total = PROFESSIONS.reduce((s, p) => s + p.w, 0);
+  let r = Math.random() * total;
+  for (const p of PROFESSIONS) { r -= p.w; if (r <= 0) return p.name; }
+  return PROFESSIONS[PROFESSIONS.length - 1].name;
+}
+
 const H: Record<string, string> = {
   apikey:        SERVICE_KEY,
   Authorization: `Bearer ${SERVICE_KEY}`,
@@ -91,15 +126,16 @@ Deno.serve(async (_req) => {
   }
 
   // 3. Generate and insert ficticia
-  const origin = wRnd(CITIES);
-  const dest   = pickDestination(origin);
-  const gender = pickGender();
+  const origin     = wRnd(CITIES);
+  const dest       = pickDestination(origin);
+  const gender     = pickGender();
+  const profession = pickProfession();
 
   const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/reports`, {
     method: 'POST',
     headers: { ...H, Prefer: 'return=minimal' },
     body: JSON.stringify({
-      gender,
+      gender, profession,
       origin_city:      origin.name,
       destination_city: dest.name,
       is_fake:          true,

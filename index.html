@@ -495,6 +495,9 @@
   <div class="ranking-list" id="rankingList"></div>
   <button class="ranking-view-all" id="openRankFull">View full ranking →</button>
 
+  <div class="section-title" style="margin-top:6px;">Most caught professions 💼</div>
+  <div class="ranking-list" id="profRankingList"></div>
+
 </aside>
 
 <!-- ════════════════════════════════════════
@@ -552,6 +555,40 @@
           <div class="fta-dropdown" id="destDrop"></div>
         </div>
         <div class="field-error" id="errDest">Please select a city</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cheater's profession <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:9px;">(optional)</span></label>
+        <select id="professionSelect">
+          <option value="">Prefer not to say</option>
+          <option>Sales Representative</option>
+          <option>Doctor/Nurse</option>
+          <option>Tradesperson</option>
+          <option>Teacher/Educator</option>
+          <option>Hospitality Worker</option>
+          <option>Executive/CEO</option>
+          <option>Police/Military</option>
+          <option>Lawyer</option>
+          <option>Pilot/Flight Attendant</option>
+          <option>Finance/Banker</option>
+          <option>IT/Developer</option>
+          <option>Journalist/Media</option>
+          <option>ER Doctor/Surgeon</option>
+          <option>Shop Owner/Retailer</option>
+          <option>Driver/Transport Worker</option>
+          <option>Athlete/Personal Trainer</option>
+          <option>Actor/Musician/DJ</option>
+          <option>Real Estate Agent</option>
+          <option>HR Professional</option>
+          <option>Architect/Engineer</option>
+          <option>Pharmacist</option>
+          <option>Psychologist/Therapist</option>
+          <option>Chef/Cook</option>
+          <option>Hairdresser/Beautician</option>
+          <option>Freelancer/Self-employed</option>
+        </select>
+        <div style="margin-top:6px;font-size:10px;color:var(--muted);line-height:1.45;">
+          🔒 For privacy, profession is only used in the global ranking — never linked to a specific city.
+        </div>
       </div>
       <button type="submit" class="submit-btn" id="submitBtn">Submit report</button>
     </form>
@@ -763,12 +800,13 @@ function getWeekStartUTC() {
 
 const _stats    = { total: 0, today: 0, week: 0, male: 0, female: 0, totalGender: 0 };
 const _rankData = {};
+const _profData = {};
 
 async function refreshStats() {
   const todayISO = getTodayUTC();
   const weekISO  = getWeekStartUTC();
 
-  const [total, todayCount, weekCount, gnData, cityAll, cityWeek, cityToday] = await Promise.all([
+  const [total, todayCount, weekCount, gnData, cityAll, cityWeek, cityToday, profAll, profWeek, profToday] = await Promise.all([
     sbCount(''),
     sbCount(`&created_at=gte.${todayISO}`),
     sbCount(`&created_at=gte.${weekISO}`),
@@ -776,6 +814,9 @@ async function refreshStats() {
     sbSelectAll('select=origin_city'),
     sbSelectAll(`select=origin_city&created_at=gte.${weekISO}`),
     sbSelectAll(`select=origin_city&created_at=gte.${todayISO}`),
+    sbSelectAll('select=profession'),
+    sbSelectAll(`select=profession&created_at=gte.${weekISO}`),
+    sbSelectAll(`select=profession&created_at=gte.${todayISO}`),
   ]);
 
   _stats.total       = total;
@@ -799,6 +840,20 @@ async function refreshStats() {
   });
   _renderRanking();
   _renderHeatmap();
+
+  Object.keys(_profData).forEach(k => delete _profData[k]);
+  profAll.forEach(r => {
+    if (!r.profession) return;
+    if (!_profData[r.profession]) _profData[r.profession] = { total: 0, week: 0, today: 0 };
+    _profData[r.profession].total++;
+  });
+  profWeek.forEach(r => {
+    if (r.profession && _profData[r.profession]) _profData[r.profession].week++;
+  });
+  profToday.forEach(r => {
+    if (r.profession && _profData[r.profession]) _profData[r.profession].today++;
+  });
+  _renderProfRanking();
 }
 
 function _renderStats() {
@@ -813,7 +868,7 @@ function _renderStats() {
   }
 }
 
-function bumpStats(gender, ts, city) {
+function bumpStats(gender, ts, city, profession) {
   const todayISO = getTodayUTC();
   const weekISO  = getWeekStartUTC();
   _stats.total++;
@@ -828,6 +883,13 @@ function bumpStats(gender, ts, city) {
     if (ts >= weekISO)  _rankData[city].week++;
     if (ts >= todayISO) _rankData[city].today++;
     _renderRanking();
+  }
+  if (profession) {
+    if (!_profData[profession]) _profData[profession] = { total: 0, week: 0, today: 0 };
+    _profData[profession].total++;
+    if (ts >= weekISO)  _profData[profession].week++;
+    if (ts >= todayISO) _profData[profession].today++;
+    _renderProfRanking();
   }
   _renderStats();
 }
@@ -847,6 +909,25 @@ function _renderRanking() {
         </div>
       </div>
     </div>`).join('');
+}
+
+function _renderProfRanking() {
+  const medals = ['gold','silver','bronze','',''];
+  const top5 = Object.entries(_profData).sort((a,b) => b[1].total - a[1].total).slice(0,5);
+  document.getElementById('profRankingList').innerHTML = top5.length
+    ? top5.map(([prof, d], i) => `
+      <div class="ranking-item">
+        <div class="rank-pos ${medals[i]}">${i+1}</div>
+        <div class="rank-body">
+          <div class="rank-city">${prof}</div>
+          <div class="rank-stats">
+            <span class="rank-pill"><span class="rn">${d.total}</span>total</span>
+            <span class="rank-pill"><span class="rn">${d.week}</span>wk</span>
+            <span class="rank-pill"><span class="rn">${d.today}</span>today</span>
+          </div>
+        </div>
+      </div>`).join('')
+    : '<div style="font-size:11px;color:var(--muted);padding:10px 14px;">No data yet</div>';
 }
 
 // ── HEATMAP ───────────────────────────────────────────────────────────────────
@@ -995,6 +1076,7 @@ document.getElementById('notifyBtn').addEventListener('click', () => {
   _gender = null;
   document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('notifyForm').reset();
+  document.getElementById('professionSelect').value = '';
   ['originInput', 'destInput'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   ['originDrop',  'destDrop' ].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('open'); });
   _coordCache.delete('origin'); _coordCache.delete('dest');
@@ -1012,6 +1094,7 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('active');
   document.getElementById('notifyForm').style.display = '';
   document.getElementById('limitMsg').style.display   = 'none';
+  document.getElementById('professionSelect').value   = '';
   _gender = null;
   document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
 }
@@ -1049,10 +1132,12 @@ document.getElementById('notifyForm').addEventListener('submit', async e => {
   const oCoords = _coordCache.get('origin');
   const dCoords = _coordCache.get('dest');
 
+  const profession = document.getElementById('professionSelect').value || null;
+
   const saved = await sbInsert({
     gender: _gender, origin_city: origin, destination_city: dest,
     is_fake: false, is_celebrity: false, confirmed_count: 0, is_confirmed: false,
-    created_at: ts,
+    created_at: ts, profession,
     origin_lat: oCoords?.lat ?? null, origin_lng: oCoords?.lng ?? null,
     dest_lat:   dCoords?.lat ?? null, dest_lng:   dCoords?.lng ?? null,
   });
@@ -1062,7 +1147,7 @@ document.getElementById('notifyForm').addEventListener('submit', async e => {
 
   drawArrow(origin, dest, _gender, oCoords?.lat, oCoords?.lng, dCoords?.lat, dCoords?.lng);
   pushFeedMsg(makeAlert(origin, dest, _gender), _gender);
-  bumpStats(_gender, ts, origin);
+  bumpStats(_gender, ts, origin, profession);
   incrementDailyCount();
   closeModal();
   showToast('Report submitted! 👀');
