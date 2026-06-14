@@ -57,9 +57,12 @@
     .header-search input::placeholder { color: var(--muted); }
     .header-search input:focus { border-color: var(--accent); }
 
+    /* ── APP SHELL — fixed-height container for panel + map ── */
+    .app-shell { display: flex; height: calc(100vh - 88px); margin-top: 60px; margin-bottom: 28px; overflow: hidden; position: relative; }
+
     /* ── LEFT PANEL ── */
     .left-panel {
-      position: fixed; top: 60px; left: 0; bottom: 28px; width: 300px;
+      position: relative; flex-shrink: 0; width: 300px; height: 100%;
       background: var(--panel-bg); border-right: 1px solid var(--border);
       overflow-y: auto; overflow-x: visible; z-index: 600;
       scrollbar-width: thin; scrollbar-color: var(--muted) transparent;
@@ -68,7 +71,7 @@
     .left-panel::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
 
     /* ── MAIN LAYOUT ── */
-    .app-layout { position: fixed; top: 60px; left: 300px; right: 0; bottom: 28px; display: flex; }
+    .app-layout { position: relative; flex: 1; display: flex; }
     #map { flex: 1; }
 
     /* ── LIVE FEED ── */
@@ -411,9 +414,9 @@
 
     @media (max-width: 768px) {
       #panelToggleBtn { display: flex; }
-      .left-panel { transform: translateX(-100%); transition: transform 0.3s ease; box-shadow: 4px 0 28px rgba(0,0,0,0.6); }
+      .app-shell { margin-top: 60px; margin-bottom: 28px; }
+      .left-panel { position: absolute; top: 0; bottom: 0; left: 0; height: 100%; transform: translateX(-100%); transition: transform 0.3s ease; box-shadow: 4px 0 28px rgba(0,0,0,0.6); }
       .left-panel.open { transform: translateX(0); }
-      .app-layout { left: 0 !important; }
       .site-footer { left: 0; }
     }
   </style>
@@ -446,6 +449,7 @@
 <div class="panel-backdrop" id="panelBackdrop"></div>
 <button id="panelToggleBtn" aria-label="Toggle panel">☰</button>
 
+<div class="app-shell">
 <!-- ════════════════════════════════════════
      LEFT PANEL
 ════════════════════════════════════════ -->
@@ -508,6 +512,7 @@
 <div class="app-layout">
   <div id="map"></div>
 </div>
+</div><!-- /.app-shell -->
 
 <!-- ════════════════════════════════════════
      REPORT MODAL
@@ -1508,8 +1513,6 @@ init().catch(err => console.error('Init error:', err));
   <span class="ed-scroll-hint-txt">Scroll for more</span>
   <div class="ed-scroll-arrow"></div>
 </div>
-
-<div class="ed-spacer"></div>
 
 <div class="ed-wrap">
 
