@@ -830,8 +830,8 @@ async function refreshStats() {
   _stats.today       = todayCount;
   _stats.week        = weekCount;
   _stats.totalGender = gnData.length;
-  _stats.male        = gnData.filter(r => r.gender === 'm').length;
-  _stats.female      = gnData.filter(r => r.gender === 'f').length;
+  _stats.male        = gnData.filter(r => r.gender === 'm' || r.gender === 'gm').length;
+  _stats.female      = gnData.filter(r => r.gender === 'f' || r.gender === 'gf').length;
   _renderStats();
 
   Object.keys(_rankData).forEach(k => delete _rankData[k]);
@@ -870,8 +870,9 @@ function _renderStats() {
   document.getElementById('statWeek').textContent  = fmt(_stats.week);
   const n = _stats.totalGender;
   if (n > 0) {
-    document.getElementById('statMale').textContent   = Math.round(_stats.male   / n * 100) + '%';
-    document.getElementById('statFemale').textContent = Math.round(_stats.female / n * 100) + '%';
+    const mPct = Math.round(_stats.male / n * 100);
+    document.getElementById('statMale').textContent   = mPct + '%';
+    document.getElementById('statFemale').textContent = (100 - mPct) + '%';
   }
 }
 
