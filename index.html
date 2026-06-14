@@ -31,7 +31,9 @@
       --border:      rgba(237,233,224,0.1);
     }
 
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Poppins', sans-serif; overflow: hidden; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Poppins', sans-serif; }
+    body { overflow-y: auto; }
+    .leaflet-container { background: var(--bg); }
 
     /* ── HEADER ── */
     header {
@@ -961,10 +963,16 @@ function _renderHeatmap() {
 }
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
-const map = L.map('map', { attributionControl: true }).setView([20, 10], 2);
+const map = L.map('map', {
+  attributionControl: true,
+  zoomSnap: 0.5,
+  minZoom: 2,
+  maxBounds: [[-90, -180], [90, 180]],
+  maxBoundsViscosity: 1.0,
+}).setView([20, 10], 2.5);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-  subdomains: 'abcd', maxZoom: 19,
+  subdomains: 'abcd', maxZoom: 19, noWrap: true,
 }).addTo(map);
 
 // ── PULSES & ARROWS ───────────────────────────────────────────────────────────
@@ -1438,6 +1446,252 @@ async function init() {
 }
 
 init().catch(err => console.error('Init error:', err));
+</script>
+
+<!-- ══════════════════════════════════════════════
+     EDITORIAL CONTENT
+════════════════════════════════════════════════ -->
+<style>
+  .ed-spacer { height: 100vh; pointer-events: none; }
+  .ed-wrap { max-width: 920px; margin: 0 auto; padding: 72px 24px 100px; }
+  .ed-section { margin-bottom: 72px; }
+  .ed-h2 { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+  .ed-h2 .acc { color: var(--accent); }
+  .ed-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .ed-p { font-size: 15px; line-height: 1.75; color: rgba(237,233,224,0.85); margin-bottom: 14px; }
+
+  .ed-steps { list-style: none; padding: 0; margin: 0; }
+  .ed-steps li { display: flex; align-items: flex-start; gap: 18px; padding: 20px 0; border-bottom: 1px solid var(--border); }
+  .ed-step-num { min-width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ed-step-strong { display: block; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .ed-step-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  .ed-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+  .ed-stat-card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 14px; padding: 28px 14px; text-align: center; }
+  .ed-stat-val { font-size: 32px; font-weight: 800; color: var(--accent); display: block; margin-bottom: 8px; min-height: 40px; }
+  .ed-stat-lbl { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  .ed-faq-wrap { margin-top: 4px; }
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-btn { width: 100%; background: none; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 18px 0; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); text-align: left; gap: 12px; }
+  .faq-arrow { font-size: 20px; color: var(--accent); flex-shrink: 0; transition: transform 0.3s; line-height: 1; }
+  .faq-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding-bottom 0.35s; font-size: 14px; line-height: 1.7; color: rgba(237,233,224,0.8); }
+  .faq-item.open .faq-arrow { transform: rotate(45deg); }
+  .faq-item.open .faq-body { max-height: 400px; padding-bottom: 18px; }
+
+  .ed-blog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .ed-blog-card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: transform 0.2s; }
+  .ed-blog-card:hover { transform: translateY(-4px); }
+  .ed-blog-img { height: 130px; display: flex; align-items: center; justify-content: center; font-size: 44px; }
+  .ed-blog-body { padding: 18px; }
+  .ed-blog-tag { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+  .ed-blog-title { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.45; margin-bottom: 8px; }
+  .ed-blog-excerpt { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  .ed-foot { border-top: 1px solid var(--border); padding: 28px 0 60px; text-align: center; font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+  .ed-scroll-hint { position: fixed; bottom: 44px; left: 50%; transform: translateX(-50%); z-index: 500; display: flex; flex-direction: column; align-items: center; gap: 5px; pointer-events: none; opacity: 1; transition: opacity 0.6s; }
+  .ed-scroll-hint.hidden { opacity: 0; }
+  .ed-scroll-hint-txt { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .ed-scroll-arrow { width: 20px; height: 20px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); animation: edBounce 1.4s infinite; }
+  @keyframes edBounce { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(5px)} }
+
+  @media (max-width: 768px) {
+    .ed-wrap { padding: 60px 16px 80px; }
+    .ed-h2 { font-size: 20px; }
+    .ed-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .ed-blog-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="ed-scroll-hint" id="edScrollHint">
+  <span class="ed-scroll-hint-txt">Scroll for more</span>
+  <div class="ed-scroll-arrow"></div>
+</div>
+
+<div class="ed-spacer"></div>
+
+<div class="ed-wrap">
+
+  <!-- 1. WHAT IS CHEATERMAP? -->
+  <section class="ed-section">
+    <h2 class="ed-h2"><span class="acc">What is</span> CheaterMap?</h2>
+    <p class="ed-sub">The first anonymous, collaborative map of infidelity reports worldwide.</p>
+    <p class="ed-p">Some things happen everywhere, all the time — but nobody talks about them out loud. CheaterMap was built on a simple idea: give people a place to anonymously mark that somewhere, in some city, someone is being unfaithful. No names. No photos. No judgement. Just data points on a map.</p>
+    <p class="ed-p">Infidelity is one of those topics everyone encounters but few discuss openly. Studies suggest that between 20% and 40% of people in committed relationships have been unfaithful at some point. Yet solid, geographic data about where it happens, when, and by whom remains nearly impossible to find. CheaterMap is an attempt to fill that gap.</p>
+    <p class="ed-p">Every pin you see on the map represents a real user report: someone who noticed something, suspected something, or simply wanted to leave a trace. The origin city and destination are the only geographic data we store. The rest is silence — but that collective silence is starting to paint a picture.</p>
+    <p class="ed-p">What began as a social experiment has grown into a surprisingly revealing source of behavioral data. As you read this, something may have just been reported in your city.</p>
+  </section>
+
+  <!-- 2. HOW DOES IT WORK? -->
+  <section class="ed-section">
+    <h2 class="ed-h2"><span class="acc">How</span> does it work?</h2>
+    <p class="ed-sub">Four steps from gut feeling to live data on the map.</p>
+    <ol class="ed-steps">
+      <li>
+        <div class="ed-step-num">1</div>
+        <div><strong class="ed-step-strong">You notice something</strong><span class="ed-step-desc">A suspicious message, a changed pattern, or just that feeling you can't shake. The moment something doesn't add up.</span></div>
+      </li>
+      <li>
+        <div class="ed-step-num">2</div>
+        <div><strong class="ed-step-strong">You visit CheaterMap</strong><span class="ed-step-desc">You open the map. You see the existing dots. You recognize cities. You decide to contribute.</span></div>
+      </li>
+      <li>
+        <div class="ed-step-num">3</div>
+        <div><strong class="ed-step-strong">You fill in the anonymous form</strong><span class="ed-step-desc">You select the gender of the person cheating, the city of origin, and the destination. No names, no personal data — just the raw shape of the report.</span></div>
+      </li>
+      <li>
+        <div class="ed-step-num">4</div>
+        <div><strong class="ed-step-strong">The map updates instantly</strong><span class="ed-step-desc">Your report appears on the map and in the live feed within seconds. It becomes part of the collective record of CheaterMap.</span></div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- 3. WHAT THE DATA TELLS US -->
+  <section class="ed-section">
+    <h2 class="ed-h2">What the data <span class="acc">tells us</span></h2>
+    <p class="ed-sub">Real statistics calculated from reports submitted to CheaterMap.</p>
+    <div class="ed-stat-grid">
+      <div class="ed-stat-card">
+        <span class="ed-stat-val" id="edStatTotal">—</span>
+        <div class="ed-stat-lbl">Total reports<br>recorded</div>
+      </div>
+      <div class="ed-stat-card">
+        <span class="ed-stat-val" id="edStatPctM">—</span>
+        <div class="ed-stat-lbl">Of cheaters<br>are male</div>
+      </div>
+      <div class="ed-stat-card">
+        <span class="ed-stat-val" id="edStatCity">—</span>
+        <div class="ed-stat-lbl">Most active<br>city on the map</div>
+      </div>
+      <div class="ed-stat-card">
+        <span class="ed-stat-val" id="edStatDay">—</span>
+        <div class="ed-stat-lbl">Day of the week<br>with most activity</div>
+      </div>
+      <div class="ed-stat-card">
+        <span class="ed-stat-val" id="edStatProf">—</span>
+        <div class="ed-stat-lbl">Most unfaithful<br>profession in the data</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. FAQ -->
+  <section class="ed-section">
+    <h2 class="ed-h2">Frequently asked <span class="acc">questions</span></h2>
+    <p class="ed-sub">Everything you need to know about how CheaterMap works.</p>
+    <div class="ed-faq-wrap" id="edFaqList">
+      <div class="faq-item">
+        <button class="faq-btn" type="button"><span>Is it completely anonymous?</span><span class="faq-arrow">+</span></button>
+        <div class="faq-body">Yes. CheaterMap requires no personal data whatsoever — no account, no email, no phone number. The only data we store is the gender of the person being reported, the city of origin, and the destination. It is impossible to identify anyone through a report.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" type="button"><span>Can I report someone by name?</span><span class="faq-arrow">+</span></button>
+        <div class="faq-body">No. The CheaterMap form does not allow names, photos, social profiles, or any identifying information. The platform is designed to surface statistical patterns, not to target individuals. Any attempt to dox or harass someone falls outside the scope of this platform.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" type="button"><span>Is the data verified?</span><span class="faq-arrow">+</span></button>
+        <div class="faq-body">CheaterMap is a collaborative, anonymous data platform. Individual reports are not verified, but the statistical aggregation of thousands of data points reveals meaningful behavioral patterns. We present the data as trends, not as proven facts about specific individuals.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" type="button"><span>How often is the map updated?</span><span class="faq-arrow">+</span></button>
+        <div class="faq-body">The map updates in real time. Every new report submitted by a user appears on the map and in the live activity feed within seconds. We also use an automatic refresh system to keep the map active at all times.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" type="button"><span>Can I delete a report once submitted?</span><span class="faq-arrow">+</span></button>
+        <div class="faq-body">No. Because reports are fully anonymous and not linked to any registered user, there is no way to authenticate that the person requesting deletion is the one who submitted it. This policy reinforces the statistical and anonymous nature of the platform.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" type="button"><span>Why isn't my city showing on the map?</span><span class="faq-arrow">+</span></button>
+        <div class="faq-body">Only cities with at least one registered report appear on the map. If your city has no pins, it means no activity has been reported from there yet. That can change at any moment.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. CURIOSITIES -->
+  <section class="ed-section">
+    <h2 class="ed-h2">Curiosities about <span class="acc">infidelity</span></h2>
+    <p class="ed-sub">Articles based on studies, research, and what CheaterMap's patterns reveal.</p>
+    <div class="ed-blog-grid">
+      <article class="ed-blog-card">
+        <div class="ed-blog-img" style="background:linear-gradient(135deg,#1E2438 0%,#2A1830 100%);">💼</div>
+        <div class="ed-blog-body">
+          <div class="ed-blog-tag">Sociology</div>
+          <div class="ed-blog-title">The most unfaithful professions according to studies</div>
+          <div class="ed-blog-excerpt">Sales reps, doctors, and tradespeople top the infidelity charts in multiple global surveys. CheaterMap's data lines up surprisingly well with academic research. The pattern is linked to time away from home and social exposure.</div>
+        </div>
+      </article>
+      <article class="ed-blog-card">
+        <div class="ed-blog-img" style="background:linear-gradient(135deg,#1E2438 0%,#1E2A20 100%);">🔬</div>
+        <div class="ed-blog-body">
+          <div class="ed-blog-tag">Science</div>
+          <div class="ed-blog-title">Why do men cheat more? What science says</div>
+          <div class="ed-blog-excerpt">CheaterMap's data confirms what evolutionary psychology has studied for decades: men make up the majority of reported cheaters. But the reasons are more nuanced than they first appear — and the gender gap is narrowing.</div>
+        </div>
+      </article>
+      <article class="ed-blog-card">
+        <div class="ed-blog-img" style="background:linear-gradient(135deg,#1E2438 0%,#2A1E18 100%);">🌍</div>
+        <div class="ed-blog-body">
+          <div class="ed-blog-tag">Data</div>
+          <div class="ed-blog-title">The world's most active cities on CheaterMap</div>
+          <div class="ed-blog-excerpt">New York, Miami and London lead the rankings, but there are unexpected surprises among mid-sized cities. We analyze the geographic patterns and compare them with divorce rates and relationship data by region.</div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <div class="ed-foot">
+    CheaterMap is an anonymous social data platform. We are not responsible for how users interpret or use the information.<br>
+    All data is community-contributed and should be treated as statistical, not as evidence against any individual.
+  </div>
+
+</div>
+
+<script>
+(function() {
+  async function loadEditorialStats() {
+    try {
+      const [total, all, prof] = await Promise.all([
+        sbCount(''),
+        sbSelect('select=origin_city,created_at,gender&limit=5000'),
+        sbSelect('select=profession&limit=5000'),
+      ]);
+      const el = id => document.getElementById(id);
+      el('edStatTotal').textContent = total.toLocaleString('en-US');
+      const males = all.filter(r => r.gender === 'm' || r.gender === 'gm').length;
+      el('edStatPctM').textContent = all.length ? Math.round(males / all.length * 100) + '%' : '—';
+      const cc = {};
+      all.forEach(r => { if (r.origin_city) cc[r.origin_city] = (cc[r.origin_city] || 0) + 1; });
+      const topCity = Object.entries(cc).sort((a, b) => b[1] - a[1])[0];
+      el('edStatCity').textContent = topCity ? topCity[0] : '—';
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const dc = [0, 0, 0, 0, 0, 0, 0];
+      all.forEach(r => { if (r.created_at) dc[new Date(r.created_at).getDay()]++; });
+      el('edStatDay').textContent = dayNames[dc.indexOf(Math.max(...dc))];
+      const pc = {};
+      prof.forEach(r => { if (r.profession) pc[r.profession] = (pc[r.profession] || 0) + 1; });
+      const topProf = Object.entries(pc).sort((a, b) => b[1] - a[1])[0];
+      el('edStatProf').textContent = topProf ? topProf[0].split('/')[0] : '—';
+    } catch (e) { /* silently fail */ }
+  }
+
+  document.querySelectorAll('#edFaqList .faq-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('#edFaqList .faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  window.addEventListener('scroll', function onEdScroll() {
+    if (window.scrollY > 80) {
+      document.getElementById('edScrollHint').classList.add('hidden');
+      window.removeEventListener('scroll', onEdScroll);
+    }
+  }, { passive: true });
+
+  setTimeout(() => loadEditorialStats(), 1800);
+}());
 </script>
 </body>
 </html>
