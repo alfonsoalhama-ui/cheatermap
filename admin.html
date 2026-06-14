@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheaterMap Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0e0e0e; --bg2: #161616; --border: rgba(255,255,255,0.08);
+      --text: #ede9e0; --muted: #666; --accent: #e0185c;
+      --green: #22c55e;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Poppins', sans-serif; min-height: 100vh; }
+
+    /* ── GATE ── */
+    #gate {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; gap: 14px;
+    }
+    #gate h1 { font-size: 20px; font-weight: 700; }
+    #gate h1 span { color: var(--accent); }
+    #gate input {
+      background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+      padding: 10px 16px; border-radius: 8px; font-size: 14px; width: 240px;
+      font-family: 'Poppins', sans-serif; outline: none; text-align: center;
+    }
+    #gate input:focus { border-color: var(--accent); }
+    #gate button {
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 10px 0; font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: 'Poppins', sans-serif; width: 240px; transition: opacity .2s;
+    }
+    #gate button:hover { opacity: .85; }
+    #gate .err { color: var(--accent); font-size: 12px; height: 16px; }
+
+    /* ── PANEL ── */
+    #panel { display: none; max-width: 860px; margin: 0 auto; padding: 28px 16px 48px; }
+
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;
+    }
+    .panel-header h1 { font-size: 17px; font-weight: 700; }
+    .panel-header h1 span { color: var(--accent); }
+    #refreshInfo { font-size: 10px; color: var(--muted); }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 10px; text-align: center;
+    }
+    .stat-label { display: block; font-size: 9px; font-weight: 600; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+    .stat-value { font-size: 26px; font-weight: 700; line-height: 1; }
+    .stat-value.real { color: var(--green); }
+    .stat-value.fake { color: var(--accent); }
+
+    /* Config */
+    .config-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px 18px; margin-bottom: 16px;
+    }
+    .section-title { font-size: 9px; font-weight: 600; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 14px; display: block; }
+    .config-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+
+    /* Toggle */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .toggle {
+      position: relative; width: 46px; height: 24px;
+      background: rgba(255,255,255,0.1); border-radius: 12px;
+      border: 1px solid var(--border); transition: background .2s;
+    }
+    .toggle.on { background: var(--accent); border-color: var(--accent); }
+    .toggle-knob {
+      position: absolute; width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; top: 2px; left: 3px; transition: left .2s;
+    }
+    .toggle.on .toggle-knob { left: 24px; }
+    .toggle-label { font-size: 13px; font-weight: 500; min-width: 110px; }
+
+    /* Interval */
+    .interval-wrap { display: flex; align-items: center; gap: 8px; }
+    .interval-wrap label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    #intervalSelect {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 6px 10px; border-radius: 6px; font-size: 12px;
+      font-family: 'Poppins', sans-serif; cursor: pointer; outline: none;
+      transition: border-color .2s;
+    }
+    #intervalSelect:focus { border-color: var(--accent); }
+
+    /* Save */
+    .save-btn {
+      background: var(--accent); color: #fff; border: none; border-radius: 6px;
+      padding: 8px 22px; font-size: 12px; font-weight: 600; cursor: pointer;
+      font-family: 'Poppins', sans-serif; transition: opacity .2s; margin-left: auto;
+    }
+    .save-btn:hover { opacity: .85; }
+    .save-btn:disabled { opacity: .45; cursor: not-allowed; }
+    #saveMsg { font-size: 11px; }
+
+    /* Reports */
+    .reports-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden;
+    }
+    .reports-header {
+      padding: 13px 16px; display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th {
+      padding: 8px 13px; text-align: left; font-size: 9px; font-weight: 600;
+      letter-spacing: .8px; text-transform: uppercase; color: var(--muted);
+      background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr.row-real:hover { background: rgba(34,197,94,0.04); }
+    tbody tr.row-fake:hover { background: rgba(255,255,255,0.02); }
+    tbody tr.row-fake td { color: var(--muted); }
+    tbody td { padding: 7px 13px; }
+
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 9px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+    }
+    .badge-real { background: rgba(34,197,94,0.12); color: var(--green); }
+    .badge-fake { background: rgba(224,24,92,0.08); color: rgba(224,24,92,.5); }
+
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .config-row { flex-direction: column; align-items: flex-start; }
+      .save-btn { margin-left: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── GATE ───────────────────────────────────────────────────────────────── -->
+<div id="gate">
+  <h1>Cheater<span>Map</span> Admin</h1>
+  <input type="password" id="pwd" placeholder="Contraseña"
+    onkeydown="if(event.key==='Enter') checkPwd()">
+  <button onclick="checkPwd()">Entrar</button>
+  <span class="err" id="gateErr"></span>
+</div>
+
+<!-- ── PANEL ──────────────────────────────────────────────────────────────── -->
+<div id="panel">
+
+  <div class="panel-header">
+    <h1>Cheater<span>Map</span> Admin</h1>
+    <span id="refreshInfo">Cargando...</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Hoy · Reales</span>
+      <span class="stat-value real" id="sTodayReal">—</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Hoy · Ficticias</span>
+      <span class="stat-value fake" id="sTodayFake">—</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Total · Reales</span>
+      <span class="stat-value real" id="sTotalReal">—</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Total · Ficticias</span>
+      <span class="stat-value fake" id="sTotalFake">—</span>
+    </div>
+  </div>
+
+  <!-- Config -->
+  <div class="config-card">
+    <span class="section-title">Control de ficticias</span>
+    <div class="config-row">
+      <div class="toggle-wrap" onclick="toggleFicticias()">
+        <div class="toggle on" id="toggleEl"><div class="toggle-knob"></div></div>
+        <span class="toggle-label" id="toggleLabel">Habilitadas</span>
+      </div>
+      <div class="interval-wrap">
+        <label for="intervalSelect">Intervalo:</label>
+        <select id="intervalSelect">
+          <option value="1">1 minuto</option>
+          <option value="2">2 minutos</option>
+          <option value="3" selected>3 minutos</option>
+          <option value="5">5 minutos</option>
+          <option value="10">10 minutos</option>
+          <option value="30">30 minutos</option>
+          <option value="60">1 hora</option>
+        </select>
+      </div>
+      <button class="save-btn" id="saveBtn" onclick="saveConfig()">Guardar</button>
+      <span id="saveMsg"></span>
+    </div>
+  </div>
+
+  <!-- Recent reports -->
+  <div class="reports-card">
+    <div class="reports-header">
+      <span class="section-title" style="margin:0">Últimos 40 reportes</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Origen</th>
+          <th>Destino</th>
+          <th>Género</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody id="reportsBody">
+        <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Cargando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /panel -->
+
+<script>
+const SUPABASE_URL = 'https://jywhmvvazlgdvnetqvdy.supabase.co';
+const ANON_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5d2htdnZhemxnZHZuZXRxdmR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDM0ODAsImV4cCI6MjA5NjE3OTQ4MH0.s8g0x5ybRaHMHhrg5oMvBMAHTzcKrEq-lIjxwyvrVsE';
+
+// ── Cambia esta contraseña por la que quieras ──────────────────────────────
+const ADMIN_PWD = 'ElArgentino14.';
+// ──────────────────────────────────────────────────────────────────────────
+
+const H = { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY };
+let _ficticiaEnabled = true;
+
+// ── AUTH ───────────────────────────────────────────────────────────────────
+function checkPwd() {
+  const val = document.getElementById('pwd').value;
+  if (val === ADMIN_PWD) {
+    document.getElementById('gate').style.display  = 'none';
+    document.getElementById('panel').style.display = 'block';
+    loadAll();
+    setInterval(loadAll, 30000);
+  } else {
+    document.getElementById('gateErr').textContent = 'Contraseña incorrecta';
+  }
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function getTodayUTC() {
+  const n = new Date();
+  return new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate())).toISOString();
+}
+
+async function countRecords(filter) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/reports?${filter}`, {
+    headers: { ...H, Prefer: 'count=exact', Range: '0-0' },
+  });
+  const cr = r.headers.get('Content-Range') || '';
+  return parseInt(cr.split('/')[1]) || 0;
+}
+
+// ── LOAD ───────────────────────────────────────────────────────────────────
+async function loadAll() {
+  const today = encodeURIComponent(getTodayUTC());
+
+  const [todayReal, todayFake, totalReal, totalFake, cfgData, recentData] = await Promise.all([
+    countRecords(`created_at=gte.${today}&is_fake=eq.false`),
+    countRecords(`created_at=gte.${today}&is_fake=eq.true`),
+    countRecords('is_fake=eq.false'),
+    countRecords('is_fake=eq.true'),
+    fetch(`${SUPABASE_URL}/rest/v1/config?id=eq.1&select=ficticia_enabled,ficticia_interval_minutes`, { headers: H }).then(r => r.json()),
+    fetch(`${SUPABASE_URL}/rest/v1/reports?select=origin_city,destination_city,gender,is_fake,created_at&order=created_at.desc&limit=40`, { headers: H }).then(r => r.json()),
+  ]);
+
+  // Stats
+  document.getElementById('sTodayReal').textContent  = todayReal.toLocaleString('en-US');
+  document.getElementById('sTodayFake').textContent  = todayFake.toLocaleString('en-US');
+  document.getElementById('sTotalReal').textContent  = totalReal.toLocaleString('en-US');
+  document.getElementById('sTotalFake').textContent  = totalFake.toLocaleString('en-US');
+
+  // Config
+  const cfg = cfgData[0];
+  if (cfg) {
+    _ficticiaEnabled = cfg.ficticia_enabled;
+    document.getElementById('toggleEl').classList.toggle('on', _ficticiaEnabled);
+    document.getElementById('toggleLabel').textContent = _ficticiaEnabled ? 'Habilitadas' : 'Deshabilitadas';
+    document.getElementById('intervalSelect').value = String(cfg.ficticia_interval_minutes);
+  }
+
+  // Table
+  const GENDER_LABEL = { m: '♂ Hombre', f: '♀ Mujer', gm: '⚣ Gay', gf: '⚢ Lesbiana' };
+  const tbody = document.getElementById('reportsBody');
+  if (!Array.isArray(recentData) || !recentData.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Sin datos</td></tr>';
+  } else {
+    tbody.innerHTML = recentData.map(r => {
+      const isFake = r.is_fake === true;
+      const time   = new Date(r.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const badge  = isFake
+        ? '<span class="badge badge-fake">Ficticia</span>'
+        : '<span class="badge badge-real">Real</span>';
+      return `<tr class="${isFake ? 'row-fake' : 'row-real'}">
+        <td>${time}</td>
+        <td>${r.origin_city}</td>
+        <td>${r.destination_city}</td>
+        <td>${GENDER_LABEL[r.gender] || r.gender}</td>
+        <td>${badge}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('refreshInfo').textContent =
+    'Actualizado ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+function toggleFicticias() {
+  _ficticiaEnabled = !_ficticiaEnabled;
+  document.getElementById('toggleEl').classList.toggle('on', _ficticiaEnabled);
+  document.getElementById('toggleLabel').textContent = _ficticiaEnabled ? 'Habilitadas' : 'Deshabilitadas';
+}
+
+async function saveConfig() {
+  const btn = document.getElementById('saveBtn');
+  const msg = document.getElementById('saveMsg');
+  btn.disabled = true;
+  msg.textContent = '';
+  msg.style.color = '';
+
+  const interval = parseInt(document.getElementById('intervalSelect').value, 10);
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/config?id=eq.1`, {
+    method:  'PATCH',
+    headers: { ...H, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body:    JSON.stringify({ ficticia_enabled: _ficticiaEnabled, ficticia_interval_minutes: interval }),
+  });
+
+  btn.disabled = false;
+  if (res.ok) {
+    msg.style.color   = 'var(--green)';
+    msg.textContent   = '✓ Guardado';
+    setTimeout(() => msg.textContent = '', 3000);
+  } else {
+    msg.style.color = 'var(--accent)';
+    msg.textContent = '✗ Error al guardar';
+    setTimeout(() => msg.textContent = '', 4000);
+  }
+}
+</script>
+</body>
+</html>

@@ -312,6 +312,11 @@
     .hist-info { flex: 1; min-width: 0; }
     .hist-cities { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .hist-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .hist-period-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+    .hist-ptab { padding: 6px 14px; background: transparent; border: 1px solid var(--border); border-radius: 20px; color: var(--muted); font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .hist-ptab:hover { border-color: var(--accent); color: var(--text); }
+    .hist-ptab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .hist-count { font-size: 10px; color: var(--muted); padding-bottom: 10px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
 
     /* ── FULL RANKING MODAL ── */
     .rankfull-overlay {
@@ -582,6 +587,11 @@
   <div class="hist-box">
     <button class="hist-close" id="histClose">✕</button>
     <div class="hist-title">Report history</div>
+    <div class="hist-period-tabs">
+      <button class="hist-ptab active" data-period="all">All time</button>
+      <button class="hist-ptab" data-period="week">This week</button>
+      <button class="hist-ptab" data-period="today">Today</button>
+    </div>
     <div class="hist-filters">
       <input type="text" id="histCityFilter" placeholder="Filter by city…" autocomplete="off">
       <button class="hist-search-btn" id="histSearchBtn">Search</button>
@@ -654,6 +664,7 @@
      SCRIPTS
 ════════════════════════════════════════ -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script>
 'use strict';
 
@@ -688,14 +699,6 @@ const CITIES = [
 const CITY_MAP = {};
 CITIES.forEach(c => { CITY_MAP[c.name] = c; });
 
-// Mismas regiones que el seed — para distribución coherente de ficticias
-const CITY_REGIONS = {
-  'Tokyo': 'asia', 'Jakarta': 'asia', 'Mumbai': 'asia', 'Istanbul': 'asia', 'Sydney': 'asia', 'Dubai': 'asia',
-  'São Paulo': 'americas', 'New York': 'americas', 'Mexico City': 'americas',
-  'Buenos Aires': 'americas', 'Chicago': 'americas', 'Miami': 'americas',
-  'Cairo': 'africa', 'Lagos': 'africa',
-  'London': 'europe', 'Paris': 'europe', 'Madrid': 'europe', 'Rome': 'europe', 'Berlin': 'europe', 'Barcelona': 'europe',
-};
 
 // ── SUPABASE REST HELPERS ────────────────────────────────────────────────────
 const SB_HEADERS = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` };
@@ -795,6 +798,7 @@ async function refreshStats() {
     if (_rankData[r.origin_city]) _rankData[r.origin_city].today++;
   });
   _renderRanking();
+  _renderHeatmap();
 }
 
 function _renderStats() {
@@ -843,6 +847,36 @@ function _renderRanking() {
         </div>
       </div>
     </div>`).join('');
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────────
+let _heatLayer = null;
+
+function _renderHeatmap() {
+  if (typeof L.heatLayer !== 'function') return;
+  const points = [];
+  for (const [cityName, data] of Object.entries(_rankData)) {
+    const city = CITY_MAP[cityName];
+    if (city && data.total > 0) {
+      points.push([city.lat, city.lng, Math.log(data.total + 1)]);
+    }
+  }
+  if (!points.length) return;
+  if (_heatLayer) {
+    _heatLayer.setLatLngs(points);
+  } else {
+    _heatLayer = L.heatLayer(points, {
+      radius:  28,
+      blur:    22,
+      maxZoom: 10,
+      gradient: {
+        0.0: 'rgba(224,24,92,0)',
+        0.3: 'rgba(224,24,92,0.55)',
+        0.6: 'rgba(255,80,40,0.75)',
+        1.0: 'rgba(255,220,80,0.9)',
+      },
+    }).addTo(map);
+  }
 }
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
@@ -918,7 +952,7 @@ const GENDER_LABEL = { m:'♂ Man', f:'♀ Woman', gm:'🌈 Gay man', gf:'🌈 L
 
 function makeAlert(origin, dest, gender) {
   const same = origin === dest;
-  const who  = { m:'A man', f:'A woman', gm:'A gay man', gf:'A lesbian' }[gender] || 'Someone';
+  const who  = { m:'A man', f:'A woman', gm:'A man', gf:'A woman' }[gender] || 'Someone';
   return same
     ? `${who} from ${origin} is cheating within their own city`
     : `${who} from ${origin} is cheating with someone in ${dest}`;
@@ -1041,55 +1075,6 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 3600);
 }
 
-// ── FICTICIAS LOOP ────────────────────────────────────────────────────────────
-function rnd(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function wRnd(arr) {
-  const total = arr.reduce((s, c) => s + (c.weight || 1), 0);
-  let r = Math.random() * total;
-  for (const c of arr) { r -= (c.weight || 1); if (r <= 0) return c; }
-  return arr[arr.length - 1];
-}
-
-function getFicticiaInterval() {
-  const days = Math.floor((Date.now() - new Date(LAUNCH_DATE).getTime()) / 86400000);
-  if (days < 4)  return (300 + Math.random() * 300)  * 1000;
-  if (days < 8)  return (180 + Math.random() * 180)  * 1000;
-  if (days < 15) return (90  + Math.random() * 90)   * 1000;
-  return              (45  + Math.random() * 75)   * 1000;
-}
-
-function startFicticiaLoop() {
-  function tick() {
-    const origin = wRnd(CITIES);
-    const gender = rnd(['m','m','m','f','f','f','gm','gf']);
-    const r = Math.random();
-    let dest;
-    if (r < 0.75) {
-      dest = origin;                                                       // 75% misma ciudad
-    } else if (r < 0.95) {
-      const region = CITY_REGIONS[origin.name];                           // 20% misma región
-      const nearby = CITIES.filter(c => CITY_REGIONS[c.name] === region && c.name !== origin.name);
-      dest = nearby.length ? rnd(nearby) : origin;
-    } else {
-      dest = wRnd(CITIES);                                                  // 5% ciudad aleatoria
-    }
-    const ts   = new Date().toISOString();
-    const tsMs = new Date(ts).getTime();
-    _recentInserts.add(tsMs);
-    setTimeout(() => _recentInserts.delete(tsMs), 15000);
-    drawArrow(origin.name, dest.name, gender);
-    pushFeedMsg(makeAlert(origin.name, dest.name, gender), gender);
-    sbInsert({
-      gender, origin_city: origin.name, destination_city: dest.name,
-      is_fake: true, is_celebrity: false, confirmed_count: 0, is_confirmed: false,
-      created_at: ts,
-      origin_lat: origin.lat, origin_lng: origin.lng,
-      dest_lat:   dest.lat,   dest_lng:   dest.lng,
-    });
-    setTimeout(tick, getFicticiaInterval());
-  }
-  tick();
-}
 
 // ── REALTIME POLLING ──────────────────────────────────────────────────────────
 let _lastSeenAt   = new Date().toISOString();
@@ -1119,24 +1104,31 @@ setInterval(pollNewReports, 10000);
 
 // ── HISTORY MODAL ─────────────────────────────────────────────────────────────
 (function() {
+  let _histPeriod = 'all';
+
   async function runSearch() {
-    const city      = document.getElementById('histCityFilter').value;
+    const city      = document.getElementById('histCityFilter').value.trim();
     const resultsEl = document.getElementById('histResults');
-    resultsEl.innerHTML = '<div class="hist-empty">Searching…</div>';
-    let params = 'select=origin_city,destination_city,gender,created_at&order=created_at.desc&limit=200';
+    resultsEl.innerHTML = '<div class="hist-empty">Loading…</div>';
+
+    let params = 'select=origin_city,destination_city,gender,created_at&order=created_at.desc';
+    if (_histPeriod === 'today') params += `&created_at=gte.${encodeURIComponent(getTodayUTC())}`;
+    else if (_histPeriod === 'week') params += `&created_at=gte.${encodeURIComponent(getWeekStartUTC())}`;
     if (city) {
       const c = encodeURIComponent(`*${city}*`);
       params += `&or=(origin_city.ilike.${c},destination_city.ilike.${c})`;
     }
-    const data = await sbSelect(params);
+
+    const data = await sbSelectAll(params);
     if (!data || !data.length) { resultsEl.innerHTML = '<div class="hist-empty">No reports found.</div>'; return; }
-    resultsEl.innerHTML = data.map(r => {
+
+    const rows = data.map(r => {
       const isLGBTQ = r.gender === 'gm' || r.gender === 'gf';
       const color   = GENDER_COLOR[r.gender] || '#5BA3E0';
       const label   = GENDER_LABEL[r.gender] || '';
       const dt      = new Date(r.created_at);
       const hour    = dt.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
-      const day     = dt.toLocaleDateString('en-US', { day:'numeric', month:'short' });
+      const day     = dt.toLocaleDateString('en-US', { day:'numeric', month:'short', year:'numeric' });
       return `<div class="hist-item">
         <div class="hist-bar${isLGBTQ ? ' lgbtq' : ''}" ${isLGBTQ ? '' : `style="background:${color}"`}></div>
         <div class="hist-info">
@@ -1145,6 +1137,16 @@ setInterval(pollNewReports, 10000);
         </div>
       </div>`;
     }).join('');
+
+    resultsEl.innerHTML =
+      `<div class="hist-count">${data.length.toLocaleString('en-US')} reports</div>` + rows;
+  }
+
+  function setTab(period) {
+    _histPeriod = period;
+    document.querySelectorAll('.hist-ptab').forEach(t =>
+      t.classList.toggle('active', t.dataset.period === period));
+    runSearch();
   }
 
   window._openHistory = function(preselect) {
@@ -1159,6 +1161,7 @@ setInterval(pollNewReports, 10000);
   document.getElementById('histOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) close(); });
   document.getElementById('histSearchBtn').addEventListener('click', runSearch);
   document.getElementById('histCityFilter').addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+  document.querySelectorAll('.hist-ptab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.period)));
 })();
 
 // ── FULL RANKING MODAL ────────────────────────────────────────────────────────
@@ -1331,9 +1334,14 @@ function populateSelects() {
 async function init() {
   populateSelects();
 
-  const recent = await sbSelect('select=origin_city,destination_city,gender,created_at,origin_lat,origin_lng,dest_lat,dest_lng&order=created_at.desc&limit=5');
+  const todayEnc = encodeURIComponent(getTodayUTC());
+  let recent = await sbSelect(`select=origin_city,destination_city,gender,created_at,origin_lat,origin_lng,dest_lat,dest_lng&created_at=gte.${todayEnc}&order=created_at.asc&limit=50`);
+  if (!recent || !recent.length) {
+    const fallback = await sbSelect('select=origin_city,destination_city,gender,created_at,origin_lat,origin_lng,dest_lat,dest_lng&order=created_at.desc&limit=10');
+    recent = fallback ? fallback.slice().reverse() : [];
+  }
   if (recent && recent.length) {
-    recent.slice().reverse().forEach((r, i) => {
+    recent.forEach((r, i) => {
       setTimeout(() => {
         drawArrow(r.origin_city, r.destination_city, r.gender, r.origin_lat, r.origin_lng, r.dest_lat, r.dest_lng);
         pushFeedMsg(makeAlert(r.origin_city, r.destination_city, r.gender), r.gender);
@@ -1342,7 +1350,6 @@ async function init() {
   }
 
   await refreshStats();
-  startFicticiaLoop();
 }
 
 init().catch(err => console.error('Init error:', err));
