@@ -56,8 +56,8 @@ function pickGender(): string {
 }
 
 const PROFESSIONS = [
-  { name: 'Sales Representative',    w: 12 },
-  { name: 'Doctor/Nurse',            w: 10 },
+  { name: 'Doctor/Nurse',            w: 12 },
+  { name: 'Sales Representative',    w: 10 },
   { name: 'Tradesperson',            w:  9 },
   { name: 'Teacher/Educator',        w:  8 },
   { name: 'Hospitality Worker',      w:  7 },

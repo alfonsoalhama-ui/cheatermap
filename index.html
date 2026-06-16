@@ -808,6 +808,8 @@ function getWeekStartUTC() {
 const _stats    = { total: 0, today: 0, week: 0, male: 0, female: 0, totalGender: 0 };
 const _rankData = {};
 const _profData = {};
+// Day of week with most activity — computed from the same data as the ranking, never a separate query
+const _dayData  = [0, 0, 0, 0, 0, 0, 0]; // Sun..Sat
 
 async function refreshStats() {
   const todayISO = getTodayUTC();
@@ -818,7 +820,7 @@ async function refreshStats() {
     sbCount(`&created_at=gte.${todayISO}`),
     sbCount(`&created_at=gte.${weekISO}`),
     sbSelectAll('select=gender'),
-    sbSelectAll('select=origin_city'),
+    sbSelectAll('select=origin_city,created_at'),
     sbSelectAll(`select=origin_city&created_at=gte.${weekISO}`),
     sbSelectAll(`select=origin_city&created_at=gte.${todayISO}`),
     sbSelectAll('select=profession'),
@@ -835,9 +837,11 @@ async function refreshStats() {
   _renderStats();
 
   Object.keys(_rankData).forEach(k => delete _rankData[k]);
+  _dayData.fill(0);
   cityAll.forEach(r => {
     if (!_rankData[r.origin_city]) _rankData[r.origin_city] = { total: 0, week: 0, today: 0 };
     _rankData[r.origin_city].total++;
+    if (r.created_at) _dayData[new Date(r.created_at).getDay()]++;
   });
   cityWeek.forEach(r => {
     if (_rankData[r.origin_city]) _rankData[r.origin_city].week++;
@@ -1655,26 +1659,18 @@ init().catch(err => console.error('Init error:', err));
 (function() {
   async function loadEditorialStats() {
     try {
-      const [total, all, prof] = await Promise.all([
-        sbCount(''),
-        sbSelect('select=origin_city,created_at,gender&limit=5000'),
-        sbSelect('select=profession&limit=5000'),
-      ]);
+      // Same source as the sidebar (ranking, counters) — never a separate query,
+      // so these 5 numbers always match what's shown in the rest of the page.
+      await refreshStats();
       const el = id => document.getElementById(id);
-      el('edStatTotal').textContent = total.toLocaleString('en-US');
-      const males = all.filter(r => r.gender === 'm' || r.gender === 'gm').length;
-      el('edStatPctM').textContent = all.length ? Math.round(males / all.length * 100) + '%' : '—';
-      const cc = {};
-      all.forEach(r => { if (r.origin_city) cc[r.origin_city] = (cc[r.origin_city] || 0) + 1; });
-      const topCity = Object.entries(cc).sort((a, b) => b[1] - a[1])[0];
+      el('edStatTotal').textContent = _stats.total.toLocaleString('en-US');
+      const mPct = _stats.totalGender ? Math.round(_stats.male / _stats.totalGender * 100) : null;
+      el('edStatPctM').textContent = mPct !== null ? mPct + '%' : '—';
+      const topCity = Object.entries(_rankData).sort((a, b) => b[1].total - a[1].total)[0];
       el('edStatCity').textContent = topCity ? topCity[0] : '—';
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const dc = [0, 0, 0, 0, 0, 0, 0];
-      all.forEach(r => { if (r.created_at) dc[new Date(r.created_at).getDay()]++; });
-      el('edStatDay').textContent = dayNames[dc.indexOf(Math.max(...dc))];
-      const pc = {};
-      prof.forEach(r => { if (r.profession) pc[r.profession] = (pc[r.profession] || 0) + 1; });
-      const topProf = Object.entries(pc).sort((a, b) => b[1] - a[1])[0];
+      el('edStatDay').textContent = dayNames[_dayData.indexOf(Math.max(..._dayData))];
+      const topProf = Object.entries(_profData).sort((a, b) => b[1].total - a[1].total)[0];
       el('edStatProf').textContent = topProf ? topProf[0].split('/')[0] : '—';
     } catch (e) { /* silently fail */ }
   }
