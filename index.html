@@ -1479,7 +1479,8 @@ init().catch(err => console.error('Init error:', err));
 
   .ed-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
   .ed-stat-card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 14px; padding: 28px 14px; text-align: center; }
-  .ed-stat-val { font-size: 32px; font-weight: 800; color: var(--accent); display: block; margin-bottom: 8px; min-height: 40px; }
+  .ed-stat-val { font-size: 32px; font-weight: 800; color: var(--accent); display: block; margin-bottom: 8px; min-height: 40px; overflow-wrap: break-word; word-break: break-word; line-height: 1.15; }
+  .ed-stat-val.is-long { font-size: 19px; line-height: 1.25; }
   .ed-stat-lbl { font-size: 12px; color: var(--muted); line-height: 1.4; }
 
   .ed-faq-wrap { margin-top: 4px; }
@@ -1663,15 +1664,20 @@ init().catch(err => console.error('Init error:', err));
       // so these 5 numbers always match what's shown in the rest of the page.
       await refreshStats();
       const el = id => document.getElementById(id);
-      el('edStatTotal').textContent = _stats.total.toLocaleString('en-US');
+      const setVal = (id, text) => {
+        const node = el(id);
+        node.textContent = text;
+        node.classList.toggle('is-long', String(text).length > 9);
+      };
+      setVal('edStatTotal', _stats.total.toLocaleString('en-US'));
       const mPct = _stats.totalGender ? Math.round(_stats.male / _stats.totalGender * 100) : null;
-      el('edStatPctM').textContent = mPct !== null ? mPct + '%' : '—';
+      setVal('edStatPctM', mPct !== null ? mPct + '%' : '—');
       const topCity = Object.entries(_rankData).sort((a, b) => b[1].total - a[1].total)[0];
-      el('edStatCity').textContent = topCity ? topCity[0] : '—';
+      setVal('edStatCity', topCity ? topCity[0] : '—');
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      el('edStatDay').textContent = dayNames[_dayData.indexOf(Math.max(..._dayData))];
+      setVal('edStatDay', dayNames[_dayData.indexOf(Math.max(..._dayData))]);
       const topProf = Object.entries(_profData).sort((a, b) => b[1].total - a[1].total)[0];
-      el('edStatProf').textContent = topProf ? topProf[0].split('/')[0] : '—';
+      setVal('edStatProf', topProf ? topProf[0].split('/')[0] : '—');
     } catch (e) { /* silently fail */ }
   }
 
