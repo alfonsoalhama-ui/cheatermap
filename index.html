@@ -1550,7 +1550,7 @@ async function insertarFicticiasPendientes() {
   try {
     const launchTime = new Date(LAUNCH_DATE).getTime();
     const now        = Date.now();
-    const INTERVALO  = 3 * 60 * 1000; // 3 min — misma cadencia que la edge function
+    const INTERVALO  = 30 * 60 * 1000; // 30 min
 
     const esperadas  = Math.floor((now - launchTime) / INTERVALO);
     const existentes = await sbCount('&is_fake=eq.true');
