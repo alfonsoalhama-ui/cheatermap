@@ -734,26 +734,26 @@ const LAUNCH_DATE       = '2026-06-11';
 
 // ── CITIES ───────────────────────────────────────────────────────────────────
 const CITIES = [
-  { name: 'New York',     lat:  40.7128, lng:  -74.0060, weight: 14 },
-  { name: 'Miami',        lat:  25.7617, lng:  -80.1918, weight: 11 },
-  { name: 'London',       lat:  51.5074, lng:   -0.1278, weight: 10 },
-  { name: 'São Paulo',    lat: -23.5505, lng:  -46.6333, weight:  9 },
-  { name: 'Chicago',      lat:  41.8781, lng:  -87.6298, weight:  8 },
-  { name: 'Paris',        lat:  48.8566, lng:    2.3522, weight:  8 },
-  { name: 'Madrid',       lat:  40.4168, lng:   -3.7038, weight:  7 },
-  { name: 'Buenos Aires', lat: -34.6037, lng:  -58.3816, weight:  7 },
-  { name: 'Dubai',        lat:  25.2048, lng:   55.2708, weight:  6 },
-  { name: 'Barcelona',    lat:  41.3851, lng:    2.1734, weight:  6 },
-  { name: 'Tokyo',        lat:  35.6762, lng:  139.6503, weight:  5 },
-  { name: 'Istanbul',     lat:  41.0082, lng:   28.9784, weight:  4 },
-  { name: 'Sydney',       lat: -33.8688, lng:  151.2093, weight:  4 },
-  { name: 'Rome',         lat:  41.9028, lng:   12.4964, weight:  3 },
-  { name: 'Berlin',       lat:  52.5200, lng:   13.4050, weight:  3 },
-  { name: 'Mexico City',  lat:  19.4326, lng:  -99.1332, weight:  3 },
-  { name: 'Mumbai',       lat:  19.0760, lng:   72.8777, weight:  2 },
-  { name: 'Jakarta',      lat:  -6.2088, lng:  106.8456, weight:  2 },
-  { name: 'Cairo',        lat:  30.0444, lng:   31.2357, weight:  1 },
-  { name: 'Lagos',        lat:   6.5244, lng:    3.3792, weight:  1 },
+  { name: 'New York',     lat:  40.7128, lng:  -74.0060, weight: 14, region: 'americas' },
+  { name: 'Miami',        lat:  25.7617, lng:  -80.1918, weight: 11, region: 'americas' },
+  { name: 'London',       lat:  51.5074, lng:   -0.1278, weight: 10, region: 'europe'   },
+  { name: 'São Paulo',    lat: -23.5505, lng:  -46.6333, weight:  9, region: 'americas' },
+  { name: 'Chicago',      lat:  41.8781, lng:  -87.6298, weight:  8, region: 'americas' },
+  { name: 'Paris',        lat:  48.8566, lng:    2.3522, weight:  8, region: 'europe'   },
+  { name: 'Madrid',       lat:  40.4168, lng:   -3.7038, weight:  7, region: 'europe'   },
+  { name: 'Buenos Aires', lat: -34.6037, lng:  -58.3816, weight:  7, region: 'americas' },
+  { name: 'Dubai',        lat:  25.2048, lng:   55.2708, weight:  6, region: 'asia'     },
+  { name: 'Barcelona',    lat:  41.3851, lng:    2.1734, weight:  6, region: 'europe'   },
+  { name: 'Tokyo',        lat:  35.6762, lng:  139.6503, weight:  5, region: 'asia'     },
+  { name: 'Istanbul',     lat:  41.0082, lng:   28.9784, weight:  4, region: 'asia'     },
+  { name: 'Sydney',       lat: -33.8688, lng:  151.2093, weight:  4, region: 'asia'     },
+  { name: 'Rome',         lat:  41.9028, lng:   12.4964, weight:  3, region: 'europe'   },
+  { name: 'Berlin',       lat:  52.5200, lng:   13.4050, weight:  3, region: 'europe'   },
+  { name: 'Mexico City',  lat:  19.4326, lng:  -99.1332, weight:  3, region: 'americas' },
+  { name: 'Mumbai',       lat:  19.0760, lng:   72.8777, weight:  2, region: 'asia'     },
+  { name: 'Jakarta',      lat:  -6.2088, lng:  106.8456, weight:  2, region: 'asia'     },
+  { name: 'Cairo',        lat:  30.0444, lng:   31.2357, weight:  1, region: 'africa'   },
+  { name: 'Lagos',        lat:   6.5244, lng:    3.3792, weight:  1, region: 'africa'   },
 ];
 const CITY_MAP = {};
 CITIES.forEach(c => { CITY_MAP[c.name] = c; });
@@ -1489,8 +1489,113 @@ function populateSelects() {
   makeWorldCityTypeahead('destInput',   'destDrop',   'destSelect',   'dest');
 }
 
+// ── FICTICIAS PENDIENTES ──────────────────────────────────────────────────────
+const PROFESSIONS = [
+  { name: 'Doctor/Nurse',             w: 12 },
+  { name: 'Sales Representative',     w: 10 },
+  { name: 'Tradesperson',             w:  9 },
+  { name: 'Teacher/Educator',         w:  8 },
+  { name: 'Hospitality Worker',       w:  7 },
+  { name: 'Executive/CEO',            w:  6 },
+  { name: 'Police/Military',          w:  5 },
+  { name: 'Lawyer',                   w:  4 },
+  { name: 'Pilot/Flight Attendant',   w:  4 },
+  { name: 'Finance/Banker',           w:  4 },
+  { name: 'IT/Developer',             w:  3 },
+  { name: 'Journalist/Media',         w:  3 },
+  { name: 'ER Doctor/Surgeon',        w:  3 },
+  { name: 'Shop Owner/Retailer',      w:  3 },
+  { name: 'Driver/Transport Worker',  w:  3 },
+  { name: 'Athlete/Personal Trainer', w:  2 },
+  { name: 'Actor/Musician/DJ',        w:  2 },
+  { name: 'Real Estate Agent',        w:  2 },
+  { name: 'HR Professional',          w:  2 },
+  { name: 'Architect/Engineer',       w:  2 },
+  { name: 'Pharmacist',               w:  1 },
+  { name: 'Psychologist/Therapist',   w:  1 },
+  { name: 'Chef/Cook',                w:  1 },
+  { name: 'Hairdresser/Beautician',   w:  1 },
+  { name: 'Freelancer/Self-employed', w:  1 },
+];
+function pickProfession() {
+  const total = PROFESSIONS.reduce((s, p) => s + p.w, 0);
+  let r = Math.random() * total;
+  for (const p of PROFESSIONS) { r -= p.w; if (r <= 0) return p.name; }
+  return PROFESSIONS[PROFESSIONS.length - 1].name;
+}
+function wRndCity() {
+  const total = CITIES.reduce((s, c) => s + c.weight, 0);
+  let r = Math.random() * total;
+  for (const c of CITIES) { r -= c.weight; if (r <= 0) return c; }
+  return CITIES[CITIES.length - 1];
+}
+function pickDestCity(origin) {
+  const r = Math.random();
+  if (r < 0.85) return origin;
+  if (r < 0.95) {
+    const nearby = CITIES.filter(c => c.region === origin.region && c.name !== origin.name);
+    return nearby.length ? nearby[Math.floor(Math.random() * nearby.length)] : origin;
+  }
+  return wRndCity();
+}
+function pickGenderFict() {
+  const r = Math.random();
+  if (r < 0.58) return 'm';
+  if (r < 0.95) return 'f';
+  if (r < 0.975) return 'gm';
+  return 'gf';
+}
+
+async function insertarFicticiasPendientes() {
+  try {
+    const launchTime = new Date(LAUNCH_DATE).getTime();
+    const now        = Date.now();
+    const INTERVALO  = 3 * 60 * 1000; // 3 min — misma cadencia que la edge function
+
+    const esperadas  = Math.floor((now - launchTime) / INTERVALO);
+    const existentes = await sbCount('&is_fake=eq.true');
+    const deficit    = esperadas - (existentes || 0);
+    const aInsertar  = Math.min(Math.max(deficit, 0), 200);
+    if (aInsertar <= 0) return;
+
+    const ultimaArr = await sbSelect('select=created_at&is_fake=eq.true&order=created_at.desc&limit=1');
+    const desde = (ultimaArr && ultimaArr.length > 0)
+      ? new Date(ultimaArr[0].created_at).getTime() + INTERVALO
+      : launchTime;
+
+    const rows = [];
+    for (let i = 0; i < aInsertar; i++) {
+      const origin   = wRndCity();
+      const dest     = pickDestCity(origin);
+      const fraction = aInsertar === 1 ? 1 : i / (aInsertar - 1);
+      const ts       = new Date(desde + fraction * (now - desde));
+      rows.push({
+        gender:           pickGenderFict(),
+        profession:       pickProfession(),
+        origin_city:      origin.name,
+        destination_city: dest.name,
+        is_fake:          true,
+        is_celebrity:     false,
+        confirmed_count:  0,
+        is_confirmed:     false,
+        created_at:       ts.toISOString(),
+        origin_lat:       origin.lat,
+        origin_lng:       origin.lng,
+        dest_lat:         dest.lat,
+        dest_lng:         dest.lng,
+      });
+    }
+    for (let i = 0; i < rows.length; i += 50) {
+      await sbInsert(rows.slice(i, i + 50));
+    }
+  } catch (err) {
+    console.error('insertarFicticiasPendientes error:', err);
+  }
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
+  await insertarFicticiasPendientes();
   populateSelects();
 
   const todayEnc = encodeURIComponent(getTodayUTC());
