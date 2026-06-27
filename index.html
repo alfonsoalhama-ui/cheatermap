@@ -1548,20 +1548,19 @@ function pickGenderFict() {
 
 async function insertarFicticiasPendientes() {
   try {
-    const launchTime = new Date(LAUNCH_DATE).getTime();
-    const now        = Date.now();
-    const INTERVALO  = 30 * 60 * 1000; // 30 min
-
-    const esperadas  = Math.floor((now - launchTime) / INTERVALO);
-    const existentes = await sbCount('&is_fake=eq.true');
-    const deficit    = esperadas - (existentes || 0);
-    const aInsertar  = Math.min(Math.max(deficit, 0), 200);
-    if (aInsertar <= 0) return;
+    const now       = Date.now();
+    const INTERVALO = 30 * 60 * 1000; // 30 min
 
     const ultimaArr = await sbSelect('select=created_at&is_fake=eq.true&order=created_at.desc&limit=1');
-    const desde = (ultimaArr && ultimaArr.length > 0)
-      ? new Date(ultimaArr[0].created_at).getTime() + INTERVALO
-      : launchTime;
+    const ultimaTs  = (ultimaArr && ultimaArr.length > 0)
+      ? new Date(ultimaArr[0].created_at).getTime()
+      : new Date(LAUNCH_DATE).getTime();
+
+    const deficit   = Math.floor((now - ultimaTs) / INTERVALO);
+    const aInsertar = Math.min(Math.max(deficit, 0), 100);
+    if (aInsertar <= 0) return;
+
+    const desde = ultimaTs + INTERVALO;
 
     const rows = [];
     for (let i = 0; i < aInsertar; i++) {
