@@ -960,6 +960,11 @@ function _renderProfRanking() {
 // ── HEATMAP ───────────────────────────────────────────────────────────────────
 let _heatLayer = null;
 
+function _heatRadius() {
+  const zoom = map ? map.getZoom() : 3;
+  return Math.min(Math.round(25 * Math.pow(2, zoom - 3)), 300);
+}
+
 function _renderHeatmap() {
   if (typeof L.heatLayer !== 'function') return;
   const points = [];
@@ -970,12 +975,14 @@ function _renderHeatmap() {
     }
   }
   if (!points.length) return;
+  const r = _heatRadius();
   if (_heatLayer) {
     _heatLayer.setLatLngs(points);
+    _heatLayer.setOptions({ radius: r, blur: Math.round(r * 0.8) });
   } else {
     _heatLayer = L.heatLayer(points, {
-      radius:  28,
-      blur:    22,
+      radius:  r,
+      blur:    Math.round(r * 0.8),
       maxZoom: 10,
       gradient: {
         0.0: 'rgba(224,24,92,0)',
@@ -1000,6 +1007,12 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_D
   attribution: '&copy; <a href="https://www.esri.com/">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
   maxZoom: 16, noWrap: true,
 }).addTo(map);
+
+map.on('zoomend', () => {
+  if (!_heatLayer) return;
+  const r = _heatRadius();
+  _heatLayer.setOptions({ radius: r, blur: Math.round(r * 0.8) });
+});
 
 // ── PULSES & ARROWS ───────────────────────────────────────────────────────────
 function spawnPulse(lat, lng, gender) {
