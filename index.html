@@ -962,7 +962,7 @@ let _heatLayer = null;
 
 function _heatRadius() {
   const zoom = map ? map.getZoom() : 3;
-  return Math.min(Math.round(25 * Math.pow(2, zoom - 3)), 300);
+  return Math.min(20 + (zoom - 3) * 10, 70);
 }
 
 function _renderHeatmap() {
