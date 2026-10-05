@@ -696,7 +696,7 @@
   <h3>Third-party services</h3>
   <ul>
     <li><strong>Supabase:</strong> Data storage. See <a href="https://supabase.com/privacy" target="_blank" rel="noopener" style="color:var(--accent)">supabase.com/privacy</a>.</li>
-    <li><strong>Stadia Maps / OpenStreetMap:</strong> Map tiles. See <a href="https://stadiamaps.com/privacy/" target="_blank" rel="noopener" style="color:var(--accent)">stadiamaps.com/privacy</a>.</li>
+    <li><strong>Esri / OpenStreetMap:</strong> Map tiles. See <a href="https://www.esri.com/en-us/privacy/overview" target="_blank" rel="noopener" style="color:var(--accent)">esri.com/privacy</a>.</li>
     <li><strong>Google Fonts:</strong> Font delivery. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" style="color:var(--accent)">policies.google.com/privacy</a>.</li>
   </ul>
   <h3>Contact</h3>
@@ -996,9 +996,9 @@ const map = L.map('map', {
   maxBounds: [[-85.05, -180], [85.05, 180]],
   maxBoundsViscosity: 1.0,
 }).setView([20, 0], 3);
-L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-  maxZoom: 20, noWrap: true,
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution: '&copy; <a href="https://www.esri.com/">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  maxZoom: 16, noWrap: true,
 }).addTo(map);
 
 // ── PULSES & ARROWS ───────────────────────────────────────────────────────────
